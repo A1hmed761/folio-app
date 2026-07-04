@@ -2,12 +2,18 @@ import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Resolve __dirname equivalence for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Middleware
 app.use(cors());
@@ -24,7 +30,12 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 let currentFileBuffer = null;
 let currentMimeType = '';
 
-// 1. Upload Route
+// 1. Serve Frontend Route (Option B addition)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// 2. Upload Route
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded.' });
@@ -38,7 +49,7 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
   res.json({ message: 'Document loaded successfully into memory.' });
 });
 
-// 2. Chat Query Route
+// 3. Chat Query Route
 app.post('/api/chat', async (req, res) => {
   const { question } = req.body;
 
@@ -76,6 +87,6 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // Start Server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`Folio backend spinning at http://localhost:${port}`);
 });
